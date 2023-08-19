@@ -3,7 +3,6 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import sqlite3 from "sqlite3";
 
 const db = new sqlite3.Database("./db.sqlite");
-db.run("CREATE TABLE notes (description TEXT)");
 
 type Data = {
   name?: string;
@@ -15,6 +14,10 @@ export default function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
+  db.serialize(() => {
+    db.run("CREATE TABLE notes (description TEXT)");
+  });
+
   if (req.method === "POST") {
     const statement = db.prepare("INSERT INTO notes (description) VALUES (?)");
     statement.run(req.body.description);
@@ -41,4 +44,18 @@ export default function handler(
     );
     return res.status(200).json({ message: "success" });
   }
+
+  // db.serialize(() => {
+  //   const stmt = db.prepare("INSERT INTO lorem VALUES (?)");
+  //   for (let i = 0; i < 10; i++) {
+  //     stmt.run("Ipsum " + i);
+  //   }
+  //   stmt.finalize();
+
+  //   db.each("SELECT rowid AS id, info FROM lorem", (err, row: any) => {
+  //     console.log(row.id + ": " + row.info);
+  //   });
+  // });
+
+  // res.status(200).json({ name: "John Doe" });
 }
